@@ -36,7 +36,7 @@ tic = time.time()
 
 ## run the optimization 
 optimize_policy_binary(action_conf_probabilistic, action_conf_binary_deriv , t_0, t_f, pol.confi,
-                       x_0, params = params, lr = 0.01, batch_size = 30, num_iter=num_iter)
+                       x_0, params = params, lr = 0.01, batch_size = 10, num_iter=num_iter)
 
 toc = time.time()
 print("Task finished in {} seconds". format(toc-tic))

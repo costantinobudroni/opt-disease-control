@@ -1,24 +1,22 @@
 import numpy as np
 import time
 
-from _01_params_funct import average_values_params
-from _02d_evolution_funct_del_inf import evolve_nat, initial_pop
-from _03_policy_funct import Policy, save_policy
-from _05_optimization import optimize_policy_del_inf
-from _06d_actions_herd_imm import action_herd, action_herd_deriv
 
-
+from _01_params_funct import average_values_params, sigmoid, V
+from _02abc_evolution_funct import evolve_nat, initial_pop
+from _03_policy_funct import Policy, save_policy, sample_conf
+from _05_optimization import optimize_policy_vax
+from _06b_actions_cont_phys_dist import action_conf_vax, action_conf_vax_deriv
 
 
 
 ###############################################################################
 ###############################################################################
 #
-#           GENERATE A POLICY TO REACH HERD IMMUNITY IN MINIMUM TIME
+#       GENERATE CONTINUOUS PHYSICAL DISTANCING POLICY WITH VACCINATION
 #
 ###############################################################################
 ###############################################################################
-
 
 
 ## offset of the outbreak
@@ -34,16 +32,18 @@ x_0 = initial_pop(offset, t_0, params)
 x_nat = evolve_nat(x_0, t_0, t_f, params)
 
 
-pol = Policy(t_0, t_f, ethical = False)
+pol = Policy(t_0, t_f, ethical = True)
 num_iter = 100
 print("Run with ", num_iter," iterations")
-tic = time.time()
-optimize_policy_del_inf(action_herd, action_herd_deriv, t_0, t_f, pol.confi, pol.inoc,
-                     x_0, params = params, lr = 0.01, num_iter=num_iter)
 
+
+## run the optimisation and time it 
+tic = time.time()
+optimize_policy_vax(action_conf_vax, action_conf_vax_deriv, t_0, t_f, pol.confi, pol.vax,
+                     x_0, params = params, lr = 0.01, num_iter=num_iter)
 toc = time.time()
 print("Task finished in {} minutes.". format(int((toc-tic)/60)))
-#print("Task finished in {} seconds". format(toc-tic))
-save_policy("Pol_herd_imm_"+str(num_iter)+"iter", pol)
+
+save_policy("Pol_vax_det_"+str(num_iter), pol)
 
 

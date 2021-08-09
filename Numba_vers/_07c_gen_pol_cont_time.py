@@ -35,7 +35,7 @@ x_nat = evolve_nat(x_0, t_0, t_f, params)
 ## Train continuous-time policy with 15 intervals
 num_pieces= 15
 pol = Policy_ct(t_0, t_f,num_pieces)
-num_iter = 500
+num_iter = 100
 print("Actual run with ", num_iter," iterations")
 tic = time.time()
 optimize_policy_ct(action_conf_ct, action_conf_deriv_ct, t_0, t_f, pol.yepa, x_0,

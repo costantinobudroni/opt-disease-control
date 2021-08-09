@@ -8,6 +8,9 @@ from _05_optimization import optimize_policy_del_inf
 from _06d_actions_herd_imm import action_herd, action_herd_deriv
 
 
+
+
+
 ###############################################################################
 ###############################################################################
 #
@@ -32,7 +35,7 @@ x_nat = evolve_nat(x_0, t_0, t_f, params)
 
 
 pol = Policy(t_0, t_f, ethical = False)
-num_iter = 300
+num_iter = 100
 print("Run with ", num_iter," iterations")
 tic = time.time()
 optimize_policy_del_inf(action_herd, action_herd_deriv, t_0, t_f, pol.confi, pol.inoc,

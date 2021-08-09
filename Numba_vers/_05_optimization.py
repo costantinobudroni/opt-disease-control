@@ -53,7 +53,40 @@ def optimize_policy(action, action_deriv, t_0, t_f, confi_vector, x_0,
 
 
 ###############################################################################
-#                               STOCHASTIC
+#                               VACCINATION
+###############################################################################
+            
+
+### Nw = number of weeks
+def optimize_policy_vax(action, action_deriv, t_0, t_f, confi_vector, vax_vector, x_0, 
+                    params = average_values_params(), 
+                    lr = 0.01, num_iter=500):
+    
+    ## initialize vectors for Adam algorithm
+    Nw = int((t_f -t_0)/7.)+1
+    m = np.zeros(2*Nw)
+    v = np.zeros(2*Nw)
+    for iteration in range(num_iter):
+        
+        ## compute the gradient of the action
+        gradient = action_deriv(t_0, t_f, confi_vector, vax_vector, x_0, params)
+        step, m, v = adam_iteration(gradient, m, v, iteration, lr)
+        confi_vector -= step[:Nw]
+        vax_vector -= step[Nw:]
+
+        
+        ## print the loss function every 200 iterations        
+        if iteration % 200 == 0:
+            loss = action(t_0, t_f, confi_vector, vax_vector, x_0, params)
+            print("Current loss: {}, {} iterations to go.".format(float(loss)
+                                                , num_iter - iteration - 1))
+            #print("Gradient:", gradient)
+
+
+
+            
+###############################################################################
+#                               STOCHASTIC (PARAMETERS)
 ###############################################################################
 
 ### optimization via stochastic gradient descent for the case that the 
@@ -71,10 +104,63 @@ def optimize_policy_stoch(action, action_deriv_stoch, t_0, t_f, confi_vector, x_
         gradient = action_deriv_stoch(t_0, t_f, confi_vector,  x_0, params, uncert, num_fluct, noise_level)
         step, m, v = adam_iteration(gradient, m, v, iteration, lr)
         confi_vector -= step
+        
+        ## print the loss function every 10000 iterations       
+        if iteration % 10000 == 0:
+            loss = action(t_0, t_f, confi_vector, x_0, params)
+            print("Current loss: {}, {} iterations to go.".format(float(loss), num_iter - iteration - 1))
+
+
+###############################################################################
+#                               STOCHASTIC (POLICY)
+###############################################################################
+
+### optimization via stochastic gradient descent for the case that the 
+### parameters have noise 
+def optimize_policy_stoch_pol(action, action_deriv_stoch, t_0, t_f, confi_vector, x_0, 
+                          params = average_values_params(), 
+                          lr = 0.01, num_iter=500, num_fluct=256, noise_level=0.05):
+    
+    ## initialize vectors for Adam algorithm
+    Nw = int((t_f -t_0)/7.)+1
+    m = np.zeros(Nw)
+    v = np.zeros(Nw)
+    for iteration in range(num_iter):
+        ## compute gradient of the action 
+        gradient = action_deriv_stoch(t_0, t_f, confi_vector,  x_0, params,  num_fluct, noise_level)
+        step, m, v = adam_iteration(gradient, m, v, iteration, lr)
+        confi_vector -= step
 
         ## print the loss function every 1000 iterations       
         if iteration % 10000 == 0:
             loss = action(t_0, t_f, confi_vector, x_0, params)
+            print("Current loss: {}, {} iterations to go.".format(float(loss), num_iter - iteration - 1))
+
+
+
+###############################################################################
+#                               STOCHASTIC (EVOLUTION)
+###############################################################################
+
+### optimization via stochastic gradient descent for the case of a stochastic
+### evolution
+def optimize_policy_stoch_evo(action, action_deriv, t_0, t_f, confi_vector, x_0, 
+                          params = average_values_params(), 
+                          lr = 0.01, num_iter=500, num_fluct=256, noise_level=0.05):
+    
+    ## initialize vectors for Adam algorithm
+    Nw = int((t_f -t_0)/7.)+1
+    m = np.zeros(Nw)
+    v = np.zeros(Nw)
+    for iteration in range(num_iter):
+        ## compute gradient of the action 
+        gradient = action_deriv(t_0, t_f, confi_vector,  x_0, params,  num_fluct, noise_level)
+        step, m, v = adam_iteration(gradient, m, v, iteration, lr)
+        confi_vector -= step
+
+        ## print the loss function every 1000 iterations       
+        if iteration % 100 == 0:
+            loss = action(t_0, t_f, confi_vector, x_0, params, noise_level)
             print("Current loss: {}, {} iterations to go.".format(float(loss), num_iter - iteration - 1))
 
 
@@ -129,6 +215,9 @@ def optimize_stoch_decr_uncert(action, action_deriv_stoch, t_0, t_f, confi_vecto
     return confi
 
 
+###############################################################################
+#               OPTIMIZATION OF BINARY (0/1) POLICIES
+###############################################################################
 
 ##Optimization of lockdown policies (0,1 valued) via gradient descent
 def optimize_policy_binary(action, action_deriv, t_0, t_f, confi_vector, x_0, 
@@ -145,13 +234,42 @@ def optimize_policy_binary(action, action_deriv, t_0, t_f, confi_vector, x_0,
         confi_vector -= step
 
                 
-        if iteration % 20 == 0:
+        if iteration % 200 == 0:
             loss = action(t_0, t_f, confi_vector, x_0, params)
             print("Current loss: {}, {} iterations to go.".format(float(loss), num_iter - iteration - 1))
 
 
+
+##Case of vaccinations
+def optimize_policy_binary_vax(action, action_deriv, t_0, t_f, confi_vector, vax_vector, x_0,
+                           params = average_values_params(), 
+                               lr = 0.01, batch_size=256, num_iter=500, few_ld=True):
+    ## initialize vectors for Adam algorithm 
+    Nw = int((t_f -t_0)/7.)+1
+    m = np.zeros(2*Nw)
+    v = np.zeros(2*Nw)
+    for iteration in range(num_iter):
+        ## compute gradient of the action 
+        gradient = action_deriv(t_0, t_f, confi_vector, vax_vector, x_0, params, batch_size, few_ld=few_ld)
+        step, m, v = adam_iteration(gradient, m, v, iteration, lr)
+        confi_vector -= step[:Nw]
+        vax_vector -= step[Nw:]
+
+                
+        if iteration % 200 == 0:
+            loss = action(t_0, t_f, confi_vector, vax_vector, x_0, params)
+            print("Current loss: {}, {} iterations to go.".format(float(loss), num_iter - iteration - 1))
+            #print("Gradient:", gradient)
+            
+
+
+            
+###############################################################################
+#              OPTIMIZATION OF CONTINUOUS-TIME POLICIES
+###############################################################################
+
 ## Optimization of policies with continuous time parameter, but a fixed number of possible lockdowns
-def optimize_policy_ct(action, action_deriv, t_0, t_f,  yepa, x_0,  
+def optimize_policy_ct(action, action_deriv, t_0, t_f,  yepa,  x_0,  
                     params = average_values_params(), lr = 0.01, num_iter=500, epsilon = 0.2):
     ## initialize vectors for Adam algorithm 
     m = np.zeros(len(yepa))
@@ -171,7 +289,38 @@ def optimize_policy_ct(action, action_deriv, t_0, t_f,  yepa, x_0,
             #print("tau vector", tau)
 
 
-    
+
+## Case of vaccinations
+def optimize_policy_vax_ct(action, action_deriv, t_0, t_f,  yepa, vax_vector, x_0,  
+                    params = average_values_params(), lr = 0.01, num_iter=500, epsilon = 0.2):
+    ## initialize vectors for Adam algorithm
+    Nw = int((t_f -t_0)/7.)+1
+    Nc = len(yepa) ## number of changes from no-lockdown to lockdown
+    m = np.zeros(Nw+Nc)
+    v = np.zeros(Nw+Nc)
+    for iteration in range(num_iter):
+        ## compute gradient of the action 
+        gradient = action_deriv(t_0, t_f,  x_0, yepa, vax_vector, params, epsilon)
+        step, m, v = adam_iteration(gradient, m, v, iteration, lr)
+        #step = lr*gradient
+        yepa -= step[:Nc]
+        vax_vector -= step[Nc:]
+        
+        
+                
+        if iteration % 200 == 0:
+            tau = (t_f - t_0)*soft_max(yepa)#.cumsum()
+            loss = action(t_0, t_f, tau, x_0, vax_vector, params,  epsilon)
+            print("Current loss: {}, {} iterations to go.".format(float(loss), num_iter - iteration - 1))
+            #print("tau vector", tau)
+
+            
+
+
+###############################################################################
+#               OPTIMIZATION OF POLICIES WITH DELIBERATE INFECTION
+###############################################################################
+
 ##Optimization of policies including the deliberate infection of a fraction of a population in order to reach herd
 ##immunity
 def optimize_policy_del_inf(action, action_deriv, t_0, t_f, confi_vector, inoc_vector, x_0, 

@@ -1,5 +1,6 @@
 import numpy as np
 
+
 ####################################################################################
 ####################################################################################
 #
@@ -36,7 +37,13 @@ epsilon = 1.0
 population = 47.0*10**6
 
 ##maximum rate of deliberate infection
-Lambda = 10.0**4/population
+Lambda_i = 10.0**4/population
+
+##maximum rate of vaccination
+Lambda_v = 0.5*10.0**5/population
+
+##maximum fraction of the population that gets a vaccine
+V=1/3
 
 ##order numbers for compartments
 S = 0
@@ -59,6 +66,8 @@ I_Cp = 12
 
 ### Lagrangian parameter to impose the constraint on critical care capacity
 mu = 100/C_bound
+### Lagrangian parameter to impose the constraint on maximum number vaccines
+mu_v = 10**4
 
 
 ## Function to compute the transmission rate at each instant t
@@ -111,8 +120,10 @@ def uncertainty_interval():
 ## Generates random deviations with respect to each average value, depending on 
 ## the noise_level which is between 0 and 1
     
+
 def rand_params_singv(aver, uncert, noise_level):
     return noise_level*(2*np.random.rand(len(aver))-1)*uncert + aver
+
 
 
 ## critical number of susceptible for herd immunity
@@ -128,30 +139,36 @@ critical_susc = 1/params_test[basic_rep_num]
 ###############################################################################
 ###############################################################################
 
+
 def sigmoid(x):
     return 1/(np.exp(-x) +1)
+
 
 def sigmoid_deriv(x):
     return sigmoid(x)*(1-sigmoid(x))
 
+
 def relu(x):
     if x <= 0.:
-        rel = 0
+        rel = 0.
     else :
         rel = x
     return rel
 
+
 def heaviside(x):
     if x <= 0.:
-        hvs = 0
+        hvs = 0.
     else :
         hvs = 1
     return hvs
 
 
+
 def soft_max(x):
     y = np.exp(x)
     return y/np.sum(y)
+
 
 
 def soft_max_diff(x):

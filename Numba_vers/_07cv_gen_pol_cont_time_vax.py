@@ -1,24 +1,22 @@
 import numpy as np
 import time
 
-from _01_params_funct import average_values_params
-from _02d_evolution_funct_del_inf import evolve_nat, initial_pop
-from _03_policy_funct import Policy, save_policy
-from _05_optimization import optimize_policy_del_inf
-from _06d_actions_herd_imm import action_herd, action_herd_deriv
 
-
+from _01_params_funct import average_values_params, sigmoid
+from _02abc_evolution_funct import evolve_nat, initial_pop
+from _03_policy_funct import Policy_ct, save_policy_ct
+from _05_optimization import optimize_policy_vax_ct
+from _06c_actions_cont_time import action_conf_vax_ct, action_conf_vax_deriv_ct
 
 
 
 ###############################################################################
 ###############################################################################
 #
-#           GENERATE A POLICY TO REACH HERD IMMUNITY IN MINIMUM TIME
+#              GENERATE CONTINUOUS TIME POLICY WITH VACCINATION
 #
 ###############################################################################
 ###############################################################################
-
 
 
 ## offset of the outbreak
@@ -33,17 +31,18 @@ x_0 = initial_pop(offset, t_0, params)
 ## natural evolution of the disease
 x_nat = evolve_nat(x_0, t_0, t_f, params)
 
-
-pol = Policy(t_0, t_f, ethical = False)
+num_lockdowns = 10
+pol = Policy_ct(t_0, t_f, num_lockdowns)
 num_iter = 100
 print("Run with ", num_iter," iterations")
-tic = time.time()
-optimize_policy_del_inf(action_herd, action_herd_deriv, t_0, t_f, pol.confi, pol.inoc,
-                     x_0, params = params, lr = 0.01, num_iter=num_iter)
 
+## run the optimisation and time it 
+tic = time.time()
+optimize_policy_vax_ct(action_conf_vax_ct, action_conf_vax_deriv_ct, t_0, t_f, pol.yepa, pol.vax,
+                           x_0, params = params, lr = 0.01, num_iter=num_iter)
 toc = time.time()
 print("Task finished in {} minutes.". format(int((toc-tic)/60)))
-#print("Task finished in {} seconds". format(toc-tic))
-save_policy("Pol_herd_imm_"+str(num_iter)+"iter", pol)
+
+save_policy_ct("Pol_novax_ct"+str(num_iter)+"iter_"+str(num_lockdowns)+"lockdowns", pol)
 
 

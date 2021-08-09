@@ -1,5 +1,4 @@
 import numpy as np
-from numba import  jit,  prange, float64, int32,  types
 
 ###############################################################################
 ###############################################################################
@@ -12,7 +11,7 @@ from numba import  jit,  prange, float64, int32,  types
 ### implements one iteration of Adam
   
 def adam_iteration(g, m, v, k, l_r):
-    ## parameters of Adam algorithm 
+    ## parameters of the Adam algorithm 
     beta_1 = 0.9
     beta_2 = 0.999
     epsilon = 10**(-8)

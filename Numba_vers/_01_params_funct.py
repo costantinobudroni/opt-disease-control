@@ -38,7 +38,13 @@ epsilon = 1.0
 population = 47.0*10**6
 
 ##maximum rate of deliberate infection
-Lambda = 10.0**4/population
+Lambda_i = 10.0**4/population
+
+##maximum rate of vaccination
+Lambda_v = 0.5*10.0**5/population
+
+##maximum fraction of the population that gets a vaccine
+V=1/3
 
 ##order numbers for compartments
 S = 0
@@ -61,6 +67,8 @@ I_Cp = 12
 
 ### Lagrangian parameter to impose the constraint on critical care capacity
 mu = 100/C_bound
+### Lagrangian parameter to impose the constraint on maximum number vaccines
+mu_v = 10**4
 
 
 ## Function to compute the transmission rate at each instant t
@@ -120,6 +128,7 @@ def rand_params_singv(aver, uncert, noise_level):
     return noise_level*(2*np.random.rand(len(aver))-1)*uncert + aver
 
 
+
 ## critical number of susceptible for herd immunity
 params_test = average_values_params()
 critical_susc = 1/params_test[basic_rep_num]
@@ -144,7 +153,7 @@ def sigmoid_deriv(x):
 @vectorize('float64(float64)',nopython=True)
 def relu(x):
     if x <= 0.:
-        rel = 0
+        rel = 0.
     else :
         rel = x
     return rel
@@ -152,7 +161,7 @@ def relu(x):
 @vectorize('float64(float64)', nopython=True)
 def heaviside(x):
     if x <= 0.:
-        hvs = 0
+        hvs = 0.
     else :
         hvs = 1
     return hvs
